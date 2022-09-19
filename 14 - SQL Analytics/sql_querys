@@ -1,0 +1,71 @@
+CREATE TABLE sql_analytics."TB_FUNC"( 
+	id INTEGER NOT NULL,
+	estado_civil CHARACTER VARYING(30), 
+	grau_instrucao CHARACTER VARYING(30),
+	numero_filhos INTEGER, 
+	salario_hora DOUBLE PRECISION, 
+	idade INTEGER, 
+	reg_procedencia CHARACTER VARYING(30),
+	PRIMARY KEY (id)
+);
+
+ALTER TABLE sql_analytics."TB_FUNC" 
+ALTER COLUMN numero_filhos type CHARACTER VARYING(2);
+
+UPDATE sql_analytics."TB_FUNC"
+SET numero_filhos = null 
+WHERE numero_filhos = 'NA';
+
+COMMIT;
+
+DELETE FROM sql_analytics."TB_FUNC"
+WHERE numero_filhos is null;
+
+COMMIT;
+
+INSERT INTO sql_analytics."TB_FUNC"(
+	id, estado_civil, grau_instrucao, numero_filhos, salario_hora, idade, reg_procedencia)
+	VALUES (38, 'casado', 'ensino medio', 3, 4.50, 30, 'capital');
+	
+	
+/*
+----Exercicio 1
+Crie uma instrução SQL que retorne a média de idade, número de filhos e grau de instrução 
+dos fúncionários cujo salario_hora estiver acima da média de todos os funcionários
+Retorno os dados somente de funcionários da capital e estado civil casado, com ordem decrescente
+da média de idade
+*/ 
+SELECT ROUND(AVG(idade)), numero_filhos, grau_instrucao 
+	FROM sql_analytics."TB_FUNC"
+	WHERE 
+		reg_procedencia = 'capital' 
+		AND estado_civil = 'casado'
+		AND salario_hora > (SELECT AVG(salario_hora) from sql_analytics."TB_FUNC")
+	GROUP BY numero_filhos, grau_instrucao
+	ORDER BY ROUND(avg(idade)) DESC;
+
+/*
+----Exercicio 2
+Retorno todos os registros dos functionários com 2 filhos
+*/ 
+SELECT * 
+FROM sql_analytics."TB_FUNC"
+WHERE CAST(numero_filhos as INTEGER) = 2;
+
+/*
+----Exercicio 3
+Retorne a media de salario hora por estado
+*/ 
+SELECT ROUND(AVG(salario_hora)), estado 
+FROM sql_analytics."TB_FUNC" a
+JOIN sql_analytics."TB_ENDERECO" b 
+	ON a.id = b.id_func
+GROUP BY b.estado;
+
+/*Criando VIEW*/
+CREATE OR REPLACE VIEW sql_analytics.VW_FUNC AS
+	SELECT ROUND(AVG(salario_hora)), estado 
+	FROM sql_analytics."TB_FUNC" a
+	JOIN sql_analytics."TB_ENDERECO" b 
+		ON a.id = b.id_func
+	GROUP BY b.estado;
